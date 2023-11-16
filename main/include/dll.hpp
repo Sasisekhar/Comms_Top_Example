@@ -46,7 +46,6 @@ namespace cadmium {
 
         void internalTransition(dllState& state) const override {
             if(state.frame_num < state.inData.data.size()) {
-                ESP_LOGI("[DEBUG]", "Counter = %d", state.frame_num);
                 state.outData = state.inData.data[state.frame_num++];
                 // ESP_LOGI("DLL", "%lx", state.outData);
             } else {

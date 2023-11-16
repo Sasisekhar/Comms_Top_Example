@@ -32,7 +32,7 @@ namespace cadmium::comms {
          * Processor state constructor. By default, the processor is idling.
          * 
          */
-        explicit MEState(): inData(0), outData(0), sigma(1), deadline(1.0){
+        explicit MEState(): inData(0), outData(0), sigma(0.01), deadline(1.0){
         }
     };
 
@@ -213,6 +213,7 @@ namespace cadmium::comms {
             // ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
             ESP_LOGI(TAG, "Transmitted: 0x%lx", state.outData);
             ESP_ERROR_CHECK(rmt_transmit(tx_channel, manchester_encoder, &state.outData, sizeof(uint32_t), &tx_config));
+            state.outData = 0;
             
         }
         
