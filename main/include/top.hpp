@@ -4,8 +4,10 @@
 #include "cadmium/modeling/devs/coupled.hpp"
 #include "ME.hpp"
 #include "generator.hpp"
+#include "tcl.hpp"
+#include "dll.hpp"
 
-namespace cadmium::topSystem {
+namespace cadmium::comms {
     struct topSystem : public Coupled {
 
             /**
@@ -13,10 +15,15 @@ namespace cadmium::topSystem {
              * @param id ID of the blinkySystem model.
              */
             topSystem(const std::string& id) : Coupled(id) {
-                auto ME1 = addComponent<ME>("ME", (gpio_num_t) 18, (gpio_num_t) 19, (uint32_t)80 * 1000 * 1000);
                 auto generator = addComponent<Generator>("generator");
+                auto layer1 = addComponent<tcl<uint64_t>>("layer1");
+                auto layer2 = addComponent<dll>("layer2");
+                auto phy = addComponent<ME>("phy", (gpio_num_t) 18, (gpio_num_t) 19, (uint32_t)80 * 1000 * 1000);
 
-                addCoupling(generator->out, ME1->in);
+                addCoupling(generator->out, layer1->in);
+                addCoupling(layer1->out, layer2->in);
+                addCoupling(layer2->out, phy->in);
+                // addCoupling(generator->out, phy->in);
             }
         };
 }

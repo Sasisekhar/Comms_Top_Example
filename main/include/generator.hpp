@@ -10,14 +10,14 @@
 
 #include <cstdlib>
 
-namespace cadmium::topSystem {
+namespace cadmium::comms {
 	//! Class for representing the Generator DEVS model state.struct GeneratorState {
 	struct GeneratorState {
+		uint64_t val;
 		double sigma;
-		uint32_t val;
 		float deadline;
 		//! Generator state constructor.
-		GeneratorState(): sigma(0), val(0), deadline(2.0)  {}
+		GeneratorState(): val(0), sigma(1),  deadline(2.0)  {}
 	};
 #ifndef NO_LOGGING
 		/**
@@ -37,17 +37,16 @@ namespace cadmium::topSystem {
 	 private:
 		
 	 public:
-		Port<uint32_t> out;
+		Port<uint64_t> out;
 
 		/**
 		 * Constructor function.
 		 * @param id ID of the new Generator model object.
 		 */
 		Generator(const std::string& id): Atomic<GeneratorState>(id, GeneratorState()) {
-			out = addOutPort<uint32_t>("out");
+			out = addOutPort<uint64_t>("out");
 			state.val = 0;
 			srand(0);
-			state.sigma = 0.1;
 		}
 
 		/**
@@ -55,8 +54,9 @@ namespace cadmium::topSystem {
 		 * @param state reference to the current state of the model.
 		 */
 		void internalTransition(GeneratorState& state) const override {
-			state.val = (uint32_t)rand();
-			// state.val = 0x11111111;
+			// state.val = (uint32_t)rand();
+			state.val = (uint64_t)9220358965123336698;
+			// state.val = 0xAAAA1234;
 		}
 
 		/**
