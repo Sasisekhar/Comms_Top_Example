@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include "cadmium/modeling/devs/atomic.hpp"
-#include "dataframe.hpp"
+#include "tcl_packet.hpp"
 #include "esp_log.h"
 
 namespace cadmium::comms {
@@ -11,7 +11,7 @@ namespace cadmium::comms {
     template<typename T>
     struct tclState {
         T inData;
-        dataframe outData;
+        tcl_packet outData;
         double sigma;
         double deadline;
 
@@ -46,12 +46,12 @@ namespace cadmium::comms {
     class tcl : public Atomic<tclState<T>> {
         public:
         Port<T> in;
-        Port<dataframe> out;
+        Port<tcl_packet> out;
 
         tcl(const std::string id) : Atomic<tclState<T>>(id, tclState<T>()) {
             ESP_LOGI("[DEBUG]", "%s", typeid(T).name());
             in  = this->template addInPort<T>("in");
-            out = this->template addOutPort<dataframe>("out");
+            out = this->template addOutPort<tcl_packet>("out");
         }
 
         void internalTransition(tclState<T>& state) const override {

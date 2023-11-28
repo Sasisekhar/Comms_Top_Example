@@ -136,12 +136,14 @@ namespace cadmium {
             }
             uint64_t dataDecoded = 0;
 
-            for(int i = 0; i < dataIndex - 4; i++) {
+            for(int i = 1; i < dataIndex - 4; i++) {
                 uint64_t tmp = (data[i])? 1 : 0;
                 dataDecoded |= tmp << (i - 1);
             }
 
-            ESP_LOGI("parse_data_frame", "Recieved frame: 0x%llx", dataDecoded);
+#ifdef NO_LOGGING
+            ESP_LOGI("[ME_RX]", "Recieved frame: 0x%llx", dataDecoded);
+#endif
 
             return(dataDecoded);
         }

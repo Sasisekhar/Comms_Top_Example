@@ -2,15 +2,18 @@
 #define DLL_HPP
 
 #include "cadmium/modeling/devs/atomic.hpp"
-#include "dataframe.hpp"
+#include "tcl_packet.hpp"
+#include "dll_frame.hpp"
 #include "esp_log.h"
 #include <iostream>
 
 namespace cadmium {
 
     struct dllState {
-        dataframe inData;
-        uint64_t outData;
+        tcl_packet tx_in_data;
+        dll_frame tx_out_data;
+        dll_frame rx_in_data;
+        tcl_packet rx_out_data;
         size_t frame_num;
         double sigma;
         double deadline;
@@ -19,7 +22,7 @@ namespace cadmium {
          * Processor state constructor. By default, the processor is idling.
          * 
          */
-        explicit dllState(): inData(), outData(0), frame_num(0), sigma(std::numeric_limits<double>::infinity()), deadline(1.0){
+        explicit dllState(): tx_in_data(), tx_out_data(), rx_in_data(), rx_out_data(), frame_num(0), sigma(std::numeric_limits<double>::infinity()), deadline(1.0){
         }
     };
 
@@ -31,7 +34,7 @@ namespace cadmium {
      * @return output stream with sigma already inserted.
      */
     std::ostream& operator<<(std::ostream &out, const dllState& state) {
-        out << "inData: " << std::hex << state.inData;
+        out << "tx_in_data: " << std::hex << state.tx_in_data;
         return out;
     }
 #endif
@@ -39,34 +42,33 @@ namespace cadmium {
     class dll : public Atomic<dllState> {
         private:
 
+        static uint8_t computeChecksum(dllState& state) {
+            uint8_t checksum = 0;
+            for(int i = 0; i < 32; i++) { //!ATTENTION hardcoded value of 32
+                checksum += ((state.tx_in_data.data[state.tx_out_data.frame_num - 1] & ((0x00000001) << i)) >> i);
+            }
+
+            for(int i = 0; i < 6; i++) {
+                checksum += ((state.tx_out_data.frame_num & ((0x01) << i)) >> i);
+            }
+            return checksum;
+        }
+
         public:
-        Port<dataframe> in;
-        Port<uint64_t> out;
+        Port<tcl_packet> in;
+        Port<dll_frame> out;
 
         dll(const std::string id) : Atomic<dllState>(id, dllState()) {
-            in = Component::addInPort<dataframe>("in");
-            out = Component::addOutPort<uint64_t>("out");
+            in = Component::addInPort<tcl_packet>("in");
+            out = Component::addOutPort<dll_frame>("out");
         }
 
         void internalTransition(dllState& state) const override {
-            if(state.frame_num < state.inData.data.size()) {
-                uint64_t out = 0;
-                uint8_t checksum = 0;
-                for(int i = 0; i < 32; i++) { //!ATTENTION hardcoded value of 32
-                    checksum += ((state.inData.data[state.frame_num] & ((0x00000001) << i)) >> i);
-                }
+            if(state.frame_num < state.tx_in_data.data.size() + 1) {
+                state.tx_out_data.data = state.tx_in_data.data[state.frame_num - 1];
+                state.tx_out_data.frame_num = state.frame_num;
+                state.tx_out_data.checksum = computeChecksum(state);
 
-                for(int i = 37; i >= 0; i--) {
-                    uint64_t tmp = 0;
-                    if(i < 32) {
-                        tmp = ((state.inData.data[state.frame_num] & ((0x00000001) << i)) >> i);
-                    } else {
-                        tmp = ((checksum & ((0x01) << (i - 32))) >> (i - 32));
-                    }
-
-                    out |= tmp << i;
-                }
-                state.outData = out;
                 state.frame_num++;
             } else {
                 state.sigma = std::numeric_limits<double>::infinity();
@@ -75,33 +77,19 @@ namespace cadmium {
 
         // external transition
         void externalTransition(dllState& state, double e) const override {
-            state.inData.data.clear();
+            state.tx_in_data.data.clear();
             if(!in->empty()){
                 for( const auto& x : in->getBag()){
-                    state.inData = x;
+                    state.tx_in_data = x;
                 }
             }
-            state.frame_num = 0;
+            state.frame_num = 1;
             state.sigma = 0.02;
 
-            if(state.frame_num < state.inData.data.size()) {
-                uint64_t out = 0;
-                uint8_t checksum = 0;
-                for(int i = 0; i < 32; i++) { //!ATTENTION hardcoded value of 32
-                    checksum += ((state.inData.data[state.frame_num] & ((0x00000001) << i)) >> i);
-                }
-
-                for(int i = 37; i >= 0; i--) {
-                    uint64_t tmp = 0;
-                    if(i < 32) {
-                        tmp = ((state.inData.data[state.frame_num] & ((0x00000001) << i)) >> i);
-                    } else {
-                        tmp = ((checksum & ((0x01) << (i - 32))) >> (i - 32));
-                    }
-
-                    out |= tmp << i;
-                }
-                state.outData = out;
+            if(state.frame_num < state.tx_in_data.data.size() + 1) {
+                state.tx_out_data.data = state.tx_in_data.data[state.frame_num - 1];
+                state.tx_out_data.frame_num = state.frame_num;
+                state.tx_out_data.checksum = computeChecksum(state);
                 state.frame_num++;
             } else {
                 state.sigma = std::numeric_limits<double>::infinity();
@@ -111,8 +99,8 @@ namespace cadmium {
         
         // output function
         void output(const dllState& state) const override {
-            // ESP_LOGI("[DLL LAMBDA]", "Sent: 0x%llx", state.outData);
-            out->addMessage(state.outData);
+            // ESP_LOGI("[DLL LAMBDA]", "Sent: 0x%llx", state.tx_out_data);
+            out->addMessage(state.tx_out_data);
         }
 
         void confluentTransition(dllState& s, double e) const {
