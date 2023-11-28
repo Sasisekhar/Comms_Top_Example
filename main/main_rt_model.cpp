@@ -1,8 +1,11 @@
-#include "include/cadmium/simulation/logger/stdout.hpp"
 #include <include/cadmium/simulation/rt_root_coordinator.hpp>
 #include <include/cadmium/simulation/rt_clock/chrono.hpp>
 #include <limits>
 #include "include/top.hpp"
+
+#ifndef NO_LOGGING
+	#include "include/cadmium/simulation/logger/stdout.hpp"
+#endif
 
 using namespace cadmium::comms;
 
@@ -18,7 +21,9 @@ extern "C" {
 		cadmium::ChronoClock clock;
 		auto rootCoordinator = cadmium::RealTimeRootCoordinator<cadmium::ChronoClock<std::chrono::steady_clock>>(model, clock);
 
+		#ifndef NO_LOGGING
 		rootCoordinator.setLogger<cadmium::STDOUTLogger>(";");
+		#endif
 
 		rootCoordinator.start();
 		rootCoordinator.simulate(std::numeric_limits<double>::infinity());

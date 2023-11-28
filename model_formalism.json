@@ -1,28 +1,41 @@
 {
-  "Main": "/home/sasisekhar/Desktop/RA/Manchester_driver/main/main_rt_model.cpp",
+  "Main": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/main_rt_model.cpp",
   "depth": 0,
   "Top": [
     {
-      "Coupled": "/home/sasisekhar/Desktop/RA/Manchester_driver/main/include/top.hpp",
+      "Coupled": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/top.hpp",
       "depth": 1,
       "Atomics": [
         {
-          "Atomic": "/home/sasisekhar/Desktop/RA/Manchester_driver/main/include/ME.hpp",
+          "Coupled": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/commstop.hpp",
           "depth": 2,
-          "states": {
-            "data": "0",
-            "sigma": "0",
-            "deadline": "1.0"
-          }
-        },
-        {
-          "Atomic": "/home/sasisekhar/Desktop/RA/Manchester_driver/main/include/generator.hpp",
-          "depth": 2,
-          "states": {
-            "sigma": "0",
-            "val": "0",
-            "deadline": "2.0"
-          }
+          "Atomics": [
+            {
+              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/ME_tx.hpp",
+              "depth": 3,
+              "states": {
+                "data": "0",
+                "sigma": "std::numeric_limits<double>::infinity(",
+                "deadline": "1.0"
+              }
+            },
+            {
+              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/tcl.hpp",
+              "depth": 3,
+              "states": {}
+            },
+            {
+              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/dll.hpp",
+              "depth": 3,
+              "states": {
+                "inData": "NULL",
+                "outData": "0",
+                "frame_num": "0",
+                "sigma": "std::numeric_limits<double>::infinity(",
+                "deadline": "1.0"
+              }
+            }
+          ]
         }
       ]
     }

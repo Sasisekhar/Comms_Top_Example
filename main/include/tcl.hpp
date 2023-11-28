@@ -19,10 +19,11 @@ namespace cadmium::comms {
          * Processor state constructor. By default, the processor is idling.
          * 
          */
-        explicit tclState<T>(): inData(), outData(), sigma(0.1), deadline(1.0){
+        explicit tclState<T>(): inData(), outData(), sigma(std::numeric_limits<double>::infinity()), deadline(1.0){
         }
     };
 
+#ifndef NO_LOGGING
     /**
      * Insertion operator for GeneratorState objects. It only displays the value of sigma.
      * @param out output stream.
@@ -39,6 +40,7 @@ namespace cadmium::comms {
          out << " }";
         return out;
     }
+#endif
 
     template<typename T>
     class tcl : public Atomic<tclState<T>> {
@@ -47,20 +49,12 @@ namespace cadmium::comms {
         Port<dataframe> out;
 
         tcl(const std::string id) : Atomic<tclState<T>>(id, tclState<T>()) {
+            ESP_LOGI("[DEBUG]", "%s", typeid(T).name());
             in  = this->template addInPort<T>("in");
             out = this->template addOutPort<dataframe>("out");
         }
 
         void internalTransition(tclState<T>& state) const override {
-
-            state.outData.data.clear();
-            for(size_t i = 0; i < sizeof(T)/sizeof(uint32_t); i++){
-                uint32_t tmp1;
-                uint32_t tmp2 = state.inData >> 32 * i;
-                memcpy(&tmp1, &tmp2, sizeof(uint32_t));
-                state.outData.data.push_back(tmp1);
-                // state.outData.data[i] = tmp1;
-            }
             state.sigma = std::numeric_limits<double>::infinity();
         }
 
@@ -71,7 +65,16 @@ namespace cadmium::comms {
                     state.inData = x;
                 }
             }
-            state.sigma = 0.1;
+            
+            state.outData.data.clear();
+            for(size_t i = 0; i < sizeof(T)/sizeof(uint32_t); i++){
+                uint32_t tmp1;
+                uint32_t tmp2 = state.inData >> 32 * i;
+                memcpy(&tmp1, &tmp2, sizeof(uint32_t));
+                state.outData.data.push_back(tmp1);
+                // state.outData.data[i] = tmp1;
+            }
+            state.sigma = 0;
         }
         
         

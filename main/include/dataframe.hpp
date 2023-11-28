@@ -17,6 +17,7 @@ namespace cadmium {
 		explicit dataframe(): data(0) {};
 	};
 
+#ifndef NO_LOGGING
 	/**
 	 * Insertion operator for Bid objects.
 	 * @param out output stream.
@@ -32,6 +33,8 @@ namespace cadmium {
 		
 		return out;
 	}
+#endif
+
 }  //namespace cadmium
 
 #endif //TRANSMISSION_HPP_

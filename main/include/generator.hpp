@@ -27,7 +27,7 @@ namespace cadmium::comms {
 		 * @return output stream with sigma already inserted.
 		 */
 		std::ostream& operator<<(std::ostream &out, const GeneratorState& state) {
-			out << "Status: " << state.val; // state to string
+			out << "Status: " << std::hex << state.val; // state to string
 			return out;
 		}
 #endif
@@ -54,9 +54,11 @@ namespace cadmium::comms {
 		 * @param state reference to the current state of the model.
 		 */
 		void internalTransition(GeneratorState& state) const override {
-			// state.val = (uint32_t)rand();
-			state.val = (uint64_t)9220358965123336698;
-			// state.val = 0xAAAA1234;
+
+			// state.val = (uint32_t)rand() << 32 | (uint16_t)rand();
+			// state.val = (uint64_t)9220358965123336698;
+			// state.val = (uint64_t)0;
+			state.val = 0xAAAA12345555FFFF;
 		}
 
 		/**

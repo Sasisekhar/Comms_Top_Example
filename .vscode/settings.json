@@ -104,7 +104,8 @@
     "variant": "cpp",
     "coupled.hpp": "c",
     "component.hpp": "c",
-    "digitaloutput.hpp": "c"
+    "digitaloutput.hpp": "c",
+    "format": "cpp"
   },
   "idf.adapterTargetName": "esp32s3",
   "C_Cpp.default.compilerPath": "C:\\Users\\appus\\.espressif\\tools\\xtensa-esp32-elf\\esp-2022r1-11.2.0\\xtensa-esp32-elf\\bin\\xtensa-esp32-elf-gcc.exe"

@@ -10,7 +10,7 @@ namespace cadmium {
 
     struct dllState {
         dataframe inData;
-        uint32_t outData;
+        uint64_t outData;
         size_t frame_num;
         double sigma;
         double deadline;
@@ -19,10 +19,11 @@ namespace cadmium {
          * Processor state constructor. By default, the processor is idling.
          * 
          */
-        explicit dllState(): inData(), outData(0), frame_num(0), sigma(0.1), deadline(1.0){
+        explicit dllState(): inData(), outData(0), frame_num(0), sigma(std::numeric_limits<double>::infinity()), deadline(1.0){
         }
     };
 
+#ifndef NO_LOGGING
     /**
      * Insertion operator for GeneratorState objects. It only displays the value of sigma.
      * @param out output stream.
@@ -33,21 +34,40 @@ namespace cadmium {
         out << "inData: " << std::hex << state.inData;
         return out;
     }
+#endif
 
     class dll : public Atomic<dllState> {
+        private:
+
         public:
         Port<dataframe> in;
-        Port<uint32_t> out;
+        Port<uint64_t> out;
 
         dll(const std::string id) : Atomic<dllState>(id, dllState()) {
             in = Component::addInPort<dataframe>("in");
-            out = Component::addOutPort<uint32_t>("out");
+            out = Component::addOutPort<uint64_t>("out");
         }
 
         void internalTransition(dllState& state) const override {
             if(state.frame_num < state.inData.data.size()) {
-                state.outData = state.inData.data[state.frame_num++];
-                // ESP_LOGI("DLL", "%lx", state.outData);
+                uint64_t out = 0;
+                uint8_t checksum = 0;
+                for(int i = 0; i < 32; i++) { //!ATTENTION hardcoded value of 32
+                    checksum += ((state.inData.data[state.frame_num] & ((0x00000001) << i)) >> i);
+                }
+
+                for(int i = 37; i >= 0; i--) {
+                    uint64_t tmp = 0;
+                    if(i < 32) {
+                        tmp = ((state.inData.data[state.frame_num] & ((0x00000001) << i)) >> i);
+                    } else {
+                        tmp = ((checksum & ((0x01) << (i - 32))) >> (i - 32));
+                    }
+
+                    out |= tmp << i;
+                }
+                state.outData = out;
+                state.frame_num++;
             } else {
                 state.sigma = std::numeric_limits<double>::infinity();
             }
@@ -55,19 +75,49 @@ namespace cadmium {
 
         // external transition
         void externalTransition(dllState& state, double e) const override {
+            state.inData.data.clear();
             if(!in->empty()){
                 for( const auto& x : in->getBag()){
                     state.inData = x;
                 }
             }
             state.frame_num = 0;
-            state.sigma = 0.3;
+            state.sigma = 0.02;
+
+            if(state.frame_num < state.inData.data.size()) {
+                uint64_t out = 0;
+                uint8_t checksum = 0;
+                for(int i = 0; i < 32; i++) { //!ATTENTION hardcoded value of 32
+                    checksum += ((state.inData.data[state.frame_num] & ((0x00000001) << i)) >> i);
+                }
+
+                for(int i = 37; i >= 0; i--) {
+                    uint64_t tmp = 0;
+                    if(i < 32) {
+                        tmp = ((state.inData.data[state.frame_num] & ((0x00000001) << i)) >> i);
+                    } else {
+                        tmp = ((checksum & ((0x01) << (i - 32))) >> (i - 32));
+                    }
+
+                    out |= tmp << i;
+                }
+                state.outData = out;
+                state.frame_num++;
+            } else {
+                state.sigma = std::numeric_limits<double>::infinity();
+            }
         }
         
         
         // output function
         void output(const dllState& state) const override {
+            // ESP_LOGI("[DLL LAMBDA]", "Sent: 0x%llx", state.outData);
             out->addMessage(state.outData);
+        }
+
+        void confluentTransition(dllState& s, double e) const {
+            this->externalTransition(s, e);
+            this->internalTransition(s);
         }
 
         // time_advance function

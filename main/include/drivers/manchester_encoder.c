@@ -24,7 +24,7 @@ static size_t rmt_encode_manchester_encoder(rmt_encoder_t *encoder, rmt_channel_
     rmt_encoder_handle_t bytes_encoder = motor_encoder->bytes_encoder;
 
     rmt_encode_state_t session_state = 0;
-    uint32_t data = *(uint32_t *)primary_data;
+    uint64_t data = *(uint64_t *)primary_data;
 
     rmt_symbol_word_t leading_bit = {
         .level0 = 0,
