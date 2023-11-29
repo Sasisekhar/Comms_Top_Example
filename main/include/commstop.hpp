@@ -7,7 +7,12 @@
 #include "tcl.hpp"
 #include "dll.hpp"
 
+#ifndef RT_ESP32
+using gpio_num_t = uint32_t;
+#endif
+
 namespace cadmium::comms {
+    
     template<typename T>
     struct commstop : public Coupled {
 
@@ -29,8 +34,14 @@ namespace cadmium::comms {
 
 
             addCoupling(in, layer1->in);
-            addCoupling(layer1->out, layer2->in);
-            addCoupling(layer2->out, phy_tx->in);
+            addCoupling(layer1->out, layer2->upstream_in);
+            addCoupling(layer2->downstream_out, phy_tx->in);
+
+            addCoupling(phy_rx->out, layer2->downstream_in);
+
+#ifndef RT_ESP32
+            addCoupling(phy_tx->out, phy_rx->in);
+#endif
             // addCoupling(phy->out, layer1->in);
             // addCoupling(layer1->out, out);
         }

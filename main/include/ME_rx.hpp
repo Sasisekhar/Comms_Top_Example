@@ -2,9 +2,10 @@
 #define ME_RX_HPP
 
 #include <iostream>
-
 #include "cadmium/modeling/devs/atomic.hpp"
-#include "cadmium/simulation/_rt/real_time/linux/asynchronous_events.hpp"
+#include "dll_frame.hpp"
+
+#ifdef RT_ESP32
 #include <driver/gpio.h>
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
@@ -13,8 +14,11 @@
 #include "driver/rmt_rx.h"
 #include "esp_log.h"
 #include "ets_sys.h"
+#endif
 
-namespace cadmium {
+namespace cadmium::comms {
+
+#ifdef RT_ESP32
     //per proper cpp, this should be static. !TODO follow cpp norms
     rmt_symbol_word_t raw_symbols[64]; // !TODO change to 35
     typedef struct {
@@ -22,17 +26,12 @@ namespace cadmium {
         void* class_ptr;
     } q_pkt;
     q_pkt queue_packet;
-
-    void AsyncEvent::notify() {
-        // interrupted = true;
-        // ets_printf("\r\nINTERUPPTED\r\n");
-        // for (unsigned int i = 0; i < views.size(); i++) views[i]->update();
-
-    }
+#endif
 
 
     struct ME_rxState {
-        uint64_t data;
+        uint64_t in_data;
+        dll_frame model_output;
         size_t frame_num;
         double sigma;
         double deadline;
@@ -41,19 +40,21 @@ namespace cadmium {
          * Processor state constructor. By default, the processor is idling.
          * 
          */
-        explicit ME_rxState(): data(0), frame_num(0), sigma(0.01), deadline(1.0){
+        explicit ME_rxState(): in_data(0), model_output(), frame_num(0), sigma(0.01), deadline(1.0){
         }
     };
 
 #ifndef NO_LOGGING
     std::ostream& operator<<(std::ostream &out, const ME_rxState& state) {
-        out << "data: " << std::hex << state.data;
+        out << "in_data: " << std::hex << state.in_data;
         return out;
     }
 #endif
 
-    class ME_rx : public Atomic<ME_rxState>, public AsyncEvent {
+    class ME_rx : public Atomic<ME_rxState> {
         private:
+
+#ifdef RT_ESP32
         const char* TAG = "[ME_RX]"; //for logging
         uint32_t TICK_RESOLUTION = 80 * 1000 * 1000;
         rmt_receive_config_t rx_config;
@@ -147,19 +148,24 @@ namespace cadmium {
 
             return(dataDecoded);
         }
+#endif
 
         public:
 
-        Port<uint64_t> out;
-        Port<bool> ext_in;
+        Port<dll_frame> out;
 
+#ifdef RT_ESP32
         gpio_num_t rxpin;
+#else
+        using gpio_num_t = uint32_t;
+        Port<uint64_t> in;
+#endif
 
         //Constructor
-        ME_rx(const std::string id, gpio_num_t _rxpin, uint32_t _tickres): Atomic<ME_rxState>(id, ME_rxState()), AsyncEvent(){
-            out = addOutPort<uint64_t> ("out");
-            ext_in = addInPort<bool>("ext_in");
-            setPort(ext_in);
+        ME_rx(const std::string id, gpio_num_t _rxpin, uint32_t _tickres): Atomic<ME_rxState>(id, ME_rxState()){
+            out = addOutPort<dll_frame> ("out");
+
+#ifdef RT_ESP32
             queue_packet.class_ptr = this;
             rxpin = _rxpin;
             TICK_RESOLUTION = _tickres;
@@ -167,43 +173,57 @@ namespace cadmium {
             rx_config.signal_range_max_ns = 350;
             config_channel_encoders();
             ESP_ERROR_CHECK(rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &rx_config));
+#else
+            in = addInPort<uint64_t> ("in");
+#endif
         }
 
         // internal transition
         void internalTransition(ME_rxState& state) const override {
+#ifdef RT_ESP32
             rmt_rx_done_event_data_t rx_data;
             if (xQueueReceive(queue_packet.recieve_queue, &rx_data, pdMS_TO_TICKS(10)) == pdPASS) {
 
                 // ESP_LOGI("[DEBUG] DELint", "Queue filled: %d", uxQueueMessagesWaiting(receive_queue));
                 // parse the receive symbols and print the result
-                state.data = parse_data_frame(rx_data.received_symbols, rx_data.num_symbols);
+                state.in_data = parse_data_frame(rx_data.received_symbols, rx_data.num_symbols);
+                state.model_output.data         = (uint32_t) (0x00000000FFFFFFFF & state.in_data);
+                state.model_output.frame_num    = (uint8_t)  (0x0000001F00000000 & state.in_data) >> 32;
+                state.model_output.total_frames = (uint8_t)  (0x000003E000000000 & state.in_data) >> 37;
+                state.model_output.checksum     = (uint8_t)  (0x0003FC0000000000 & state.in_data) >> 42;
 
                 // start receive again
                 ESP_ERROR_CHECK(rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &rx_config));
             }
-            // state.sigma = std::numeric_limits<double>::infinity();
+#else
+            state.sigma = std::numeric_limits<double>::infinity();
+#endif
         }
 
         // external transition
         void externalTransition(ME_rxState& state, double e) const override {
-            // rmt_rx_done_event_data_t rx_data;
-            // if (xQueueReceive(queue_packet.recieve_queue, &rx_data, pdMS_TO_TICKS(10)) == pdPASS) {
+#ifdef RT_ESP32
+            //Nothing done here now, comeback once interrupt implemented
+#else
+            if(!in->empty()){
+                for( const auto x : in->getBag()){
+                    state.in_data = x;
+                }
+            }
 
-            //     // ESP_LOGI("[DEBUG] DELint", "Queue filled: %d", uxQueueMessagesWaiting(receive_queue));
-            //     // parse the receive symbols and print the result
-            //     state.data = parse_data_frame(rx_data.received_symbols, rx_data.num_symbols);
+            state.model_output.data         = (uint32_t) (0x00000000FFFFFFFF & state.in_data);
+            state.model_output.frame_num    = (uint8_t)  ((0x0000001F00000000 & state.in_data) >> 32);
+            state.model_output.total_frames = (uint8_t)  ((0x000003E000000000 & state.in_data) >> 37);
+            state.model_output.checksum     = (uint8_t)  ((0x0003FC0000000000 & state.in_data) >> 42);
 
-            //     // start receive again
-            //     ESP_ERROR_CHECK(rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &rx_config));
-            // }
-            // ESP_LOGI(TAG, "External");
-            // state.sigma = 0.1;
+            state.sigma = 0;
+#endif
         }
         
         
         // output function
         void output(const ME_rxState& state) const override {
-            out->addMessage(state.data);
+            out->addMessage(state.model_output);
         }
 
         // time_advance function

@@ -4,7 +4,7 @@
 #include <iostream>
 #include "cadmium/modeling/devs/atomic.hpp"
 #include "tcl_packet.hpp"
-#include "esp_log.h"
+// #include "esp_log.h"
 
 namespace cadmium::comms {
 
@@ -49,7 +49,7 @@ namespace cadmium::comms {
         Port<tcl_packet> out;
 
         tcl(const std::string id) : Atomic<tclState<T>>(id, tclState<T>()) {
-            ESP_LOGI("[DEBUG]", "%s", typeid(T).name());
+            // ESP_LOGI("[DEBUG]", "%s", typeid(T).name());
             in  = this->template addInPort<T>("in");
             out = this->template addOutPort<tcl_packet>("out");
         }

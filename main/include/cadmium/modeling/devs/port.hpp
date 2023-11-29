@@ -193,7 +193,12 @@ namespace cadmium {
          */
         [[nodiscard]] std::string logMessage(std::size_t i) const override {
             std::stringstream ss;
+
+#ifdef LOG_HEX
+            ss << "0x" << std::hex << bag.at(i);
+#else
             ss << bag.at(i);
+#endif
             return ss.str();
         }
     #endif

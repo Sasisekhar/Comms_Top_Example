@@ -62,7 +62,7 @@ namespace cadmium {
 		 * @param output string representation of the output message.
 		 */
 		void logOutput(double time, long modelId, const std::string& modelName, const std::string& portName, const std::string& output) override {
-			std::cout << time << sep << modelId << sep << modelName << sep << portName << sep << output << std::endl;
+			std::cout << "\x1B[32m" << time << sep << modelId << sep << modelName << sep << portName << sep << output << "\033[0m" << std::endl;
 		}
 
 		/**
@@ -73,7 +73,7 @@ namespace cadmium {
 		 * @param state string representation of the state.
 		 */
 		void logState(double time, long modelId, const std::string& modelName, const std::string& state) override {
-			std::cout << time << sep << modelId << sep << modelName << sep << sep << state << std::endl;
+			std::cout << "\x1B[33m" << time << sep << modelId << sep << modelName << sep << sep << state << "\033[0m" << std::endl;
 		}
 	};
 }
