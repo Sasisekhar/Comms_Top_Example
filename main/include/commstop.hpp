@@ -12,7 +12,7 @@ using gpio_num_t = uint32_t;
 #endif
 
 namespace cadmium::comms {
-    
+
     template<typename T>
     struct commstop : public Coupled {
 
@@ -33,17 +33,16 @@ namespace cadmium::comms {
             auto phy_tx = addComponent<ME_tx>("phy_tx", (gpio_num_t) 18, (uint32_t)80 * 1000 * 1000);
 
 
-            addCoupling(in, layer1->in);
-            addCoupling(layer1->out, layer2->upstream_in);
+            addCoupling(in, layer1->upstream_in);
+            addCoupling(layer1->downstream_out, layer2->upstream_in);
             addCoupling(layer2->downstream_out, phy_tx->in);
 
             addCoupling(phy_rx->out, layer2->downstream_in);
+            addCoupling(layer2->upstream_out, layer1->downstream_in);
 
 #ifndef RT_ESP32
             addCoupling(phy_tx->out, phy_rx->in);
 #endif
-            // addCoupling(phy->out, layer1->in);
-            // addCoupling(layer1->out, out);
         }
     };
 }

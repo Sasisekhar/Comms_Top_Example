@@ -73,7 +73,12 @@ namespace cadmium {
 		 * @param state string representation of the state.
 		 */
 		void logState(double time, long modelId, const std::string& modelName, const std::string& state) override {
+
+#ifdef NO_LOG_STATE
+			//Do not output anything...maybe add std::cout << "del int"?
+#else
 			std::cout << "\x1B[33m" << time << sep << modelId << sep << modelName << sep << sep << state << "\033[0m" << std::endl;
+#endif
 		}
 	};
 }

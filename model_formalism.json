@@ -7,14 +7,35 @@
       "depth": 1,
       "Atomics": [
         {
+          "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/generator.hpp",
+          "depth": 2,
+          "states": {
+            "val": "0",
+            "sigma": "1",
+            "deadline": "2.0"
+          }
+        },
+        {
           "Coupled": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/commstop.hpp",
           "depth": 2,
           "Atomics": [
             {
+              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/ME_rx.hpp",
+              "depth": 3,
+              "states": {
+                "in_data": "0",
+                "model_output": "NULL",
+                "frame_num": "0",
+                "sigma": "0.01",
+                "deadline": "1.0"
+              }
+            },
+            {
               "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/ME_tx.hpp",
               "depth": 3,
               "states": {
-                "data": "0",
+                "in_data": "NULL",
+                "out_data": "0",
                 "sigma": "std::numeric_limits<double>::infinity(",
                 "deadline": "1.0"
               }
@@ -28,9 +49,14 @@
               "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/dll.hpp",
               "depth": 3,
               "states": {
-                "inData": "NULL",
-                "outData": "0",
+                "upstream_in_data": "NULL",
+                "downstream_out_data": "NULL",
+                "downstream_in_data": "NULL",
+                "upstream_out_data": "NULL",
+                "downstream_tx": "false",
+                "upstream_tx": "false",
                 "frame_num": "0",
+                "downstream_rx_hist": "NULL",
                 "sigma": "std::numeric_limits<double>::infinity(",
                 "deadline": "1.0"
               }

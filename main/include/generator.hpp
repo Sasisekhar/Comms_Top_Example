@@ -2,22 +2,22 @@
 #define _GENERATOR_HPP__
 
 #include "cadmium/modeling/devs/atomic.hpp"
+#include "trial_port_type.hpp"
 
 #ifndef NO_LOGGING
 	#include <iostream>
 #endif
-
-
 #include <cstdlib>
 
-namespace cadmium::comms {
+namespace cadmium::example {
 	//! Class for representing the Generator DEVS model state.struct GeneratorState {
 	struct GeneratorState {
-		uint64_t val;
+		RGB_val val;
+		// uint64_t val;
 		double sigma;
 		float deadline;
 		//! Generator state constructor.
-		GeneratorState(): val(0), sigma(1),  deadline(2.0)  {}
+		GeneratorState(): val(), sigma(1),  deadline(2.0)  {}
 	};
 #ifndef NO_LOGGING
 		/**
@@ -27,7 +27,7 @@ namespace cadmium::comms {
 		 * @return output stream with sigma already inserted.
 		 */
 		std::ostream& operator<<(std::ostream &out, const GeneratorState& state) {
-			out << "Status: " << std::hex << state.val; // state to string
+			out << "Status: " << state.val; // state to string
 			return out;
 		}
 #endif
@@ -37,15 +37,16 @@ namespace cadmium::comms {
 	 private:
 		
 	 public:
-		Port<uint64_t> out;
+		Port<RGB_val> out;
+		// Port<uint64_t> out;
 
 		/**
 		 * Constructor function.
 		 * @param id ID of the new Generator model object.
 		 */
 		Generator(const std::string& id): Atomic<GeneratorState>(id, GeneratorState()) {
-			out = addOutPort<uint64_t>("out");
-			state.val = 0;
+			out = addOutPort<RGB_val>("out");
+			// out = addOutPort<uint64_t>("out");
 			srand(0);
 		}
 
@@ -58,7 +59,14 @@ namespace cadmium::comms {
 			// state.val = (uint32_t)rand() << 32 | (uint16_t)rand();
 			// state.val = (uint64_t)9220358965123336698;
 			// state.val = (uint64_t)0;
-			state.val = 0xAAAA12345555FFFF;
+			// state.val = 0xAAAA12345555FFFF;
+			// state.val = (double) 3.141592;
+			// state.val.red = 0xaaff;
+			// state.val.green = true;
+
+			for(int i = 0; i < 5; i++){
+				state.val.blue[i] = 174;
+			}
 		}
 
 		/**

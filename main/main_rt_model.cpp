@@ -7,7 +7,7 @@
 	#include "include/cadmium/simulation/logger/stdout.hpp"
 #endif
 
-using namespace cadmium::comms;
+using namespace cadmium::example;
 
 extern "C" {
 	#ifdef RT_ESP32
@@ -27,7 +27,7 @@ extern "C" {
 
 		rootCoordinator.start();
 		// rootCoordinator.simulate(std::numeric_limits<double>::infinity());
-		rootCoordinator.simulate(5.0);
+		rootCoordinator.simulate(5.04);
 		rootCoordinator.stop();	
 
 		#ifndef RT_ESP32

@@ -18,6 +18,7 @@ namespace cadmium::comms {
         bool upstream_tx;
         size_t frame_num;
         std::vector<dll_frame> downstream_rx_hist;
+        std::vector<uint32_t> data;
         double sigma;
         double deadline;
 
@@ -25,7 +26,7 @@ namespace cadmium::comms {
          * Processor state constructor. By default, the processor is idling.
          * 
          */
-        explicit dllState(): upstream_in_data(), downstream_out_data(), downstream_in_data(), upstream_out_data(), downstream_tx(false), upstream_tx(false), frame_num(0), downstream_rx_hist(), sigma(std::numeric_limits<double>::infinity()), deadline(1.0){
+        explicit dllState(): upstream_in_data(), downstream_out_data(), downstream_in_data(), upstream_out_data(), downstream_tx(false), upstream_tx(false), frame_num(0), downstream_rx_hist(), data(0), sigma(std::numeric_limits<double>::infinity()), deadline(1.0){
         }
     };
 
@@ -37,13 +38,7 @@ namespace cadmium::comms {
      * @return output stream with sigma already inserted.
      */
     std::ostream& operator<<(std::ostream &out, const dllState& state) {
-        out << "{ upstream_in_data: " << std::hex << state.upstream_in_data  << "}";/*<< "downstream_rx_hist: {";
-
-        for(auto x : state.downstream_rx_hist){
-            out << std::hex << x;
-            out << ", ";
-        }
-        out << "} }";*/
+        out << "{ upstream_in_data: " << std::hex << state.upstream_in_data  << "}";
         return out;
     }
 #endif
@@ -57,12 +52,16 @@ namespace cadmium::comms {
                 checksum += ((frame.data & ((0x00000001) << i)) >> i);
             }
 
-            for(int i = 0; i < FRAME_LEN; i++) {
+            for(int i = 0; i < FRAME_NUM_LEN; i++) {
                 checksum += ((frame.frame_num & ((0x01) << i)) >> i);
             }
 
-            for(int i = 0; i < FRAME_LEN; i++) {
+            for(int i = 0; i < FRAME_NUM_LEN; i++) {
                 checksum += ((frame.total_frames & ((0x01) << i)) >> i);
+            }
+
+            for(int i = 0; i < SELECT_LEN; i++) {
+                checksum += (((frame.datalen_frame_select? 1 : 0 )& ((0x01) << i)) >> i);
             }
             return checksum;
         }
@@ -86,8 +85,9 @@ namespace cadmium::comms {
 
         void internalTransition(dllState& state) const override {
             state.upstream_tx = false;
-            if(state.frame_num < state.upstream_in_data.data.size()) {
-                state.downstream_out_data.data = state.upstream_in_data.data[state.frame_num];
+            if(state.frame_num < state.data.size()) {
+                state.downstream_out_data.datalen_frame_select = false;
+                state.downstream_out_data.data = state.data[state.frame_num];
                 state.downstream_out_data.frame_num = state.frame_num;
                 state.downstream_out_data.checksum = computeChecksum(state.downstream_out_data);
 
@@ -110,19 +110,59 @@ namespace cadmium::comms {
                     state.upstream_in_data = x;
                 }
                 state.frame_num = 0;
-                state.sigma = 0.02;
 
-                if(state.frame_num < state.upstream_in_data.data.size()) {
-                    state.downstream_out_data.data = state.upstream_in_data.data[state.frame_num];
-                    state.downstream_out_data.frame_num = state.frame_num;
+                if(state.upstream_in_data.data.size() < sizeof(uint32_t)) {
+
+                    state.downstream_out_data.datalen_frame_select = true;
+                    
+                    state.downstream_out_data.data = 0;
+                    for(int i = 0; i < state.upstream_in_data.data.size(); i++) {
+                        state.downstream_out_data.data |= state.upstream_in_data.data[i] << i * 8;
+                    }
+                    state.downstream_out_data.frame_num = state.upstream_in_data.data.size();
                     state.downstream_out_data.total_frames = state.upstream_in_data.data.size();
+                    state.downstream_out_data.checksum = computeChecksum(state.downstream_out_data);
+
+                    state.frame_num = state.upstream_in_data.data.size();
+                    state.downstream_tx = true;
+                } else {
+                    uint32_t tmp_data = 0;
+                    state.data.clear();
+                    if((state.upstream_in_data.data.size() % 4) == 0){
+                        for(int i = 0; i < state.upstream_in_data.data.size(); i++) {
+                            tmp_data |= state.upstream_in_data.data[i] << (i % 4) * 8;
+                            if((i % 4 == 3)) {
+                                state.data.push_back(tmp_data);
+                                tmp_data = 0UL;
+                            }
+                        }
+                    } else {
+                        for(int i = 0; i < (state.upstream_in_data.data.size() + 4 + (state.upstream_in_data.data.size() % 4)); i++) {
+                            if(i < state.upstream_in_data.data.size()) {
+                                tmp_data |= state.upstream_in_data.data[i] << (i % 4) * 8;
+                            } else {
+                                tmp_data |= 0 << (i % 4) * 8;
+                            }
+                            
+                            if((i % 4 == 3)) {
+                                state.data.push_back(tmp_data);
+                                tmp_data = 0UL;
+                            }
+                        }
+                    }
+                }
+
+                if(state.frame_num < state.data.size()) {
+                    state.downstream_out_data.datalen_frame_select = false;
+                    state.downstream_out_data.data = state.data[state.frame_num];
+                    state.downstream_out_data.frame_num = state.frame_num;
+                    state.downstream_out_data.total_frames = state.data.size();
                     state.downstream_out_data.checksum = computeChecksum(state.downstream_out_data);
                     state.frame_num++;
                     state.downstream_tx = true;
-                } else {
-                    state.sigma = std::numeric_limits<double>::infinity();
-                    state.downstream_tx = false;
                 }
+
+                state.sigma = 0.02;
             }
 
             if(!downstream_in->empty()) {
@@ -131,17 +171,33 @@ namespace cadmium::comms {
                     state.downstream_in_data = x;
                 }
                 
+                bool checksum_valid = true;
                 if(state.downstream_in_data.checksum == computeChecksum(state.downstream_in_data)){
                     state.downstream_rx_hist.push_back(state.downstream_in_data);
+                    checksum_valid = true;
                 } else {
                     std::cout << "CHECKSUM INVALID" << std::endl;
                 }
 
-                if(state.downstream_rx_hist.back().frame_num == (state.downstream_rx_hist.back().total_frames - 1)) {
-                    for(auto x : state.downstream_rx_hist) {
-                        state.upstream_out_data.data.push_back(x.data);
+                if(checksum_valid){
+                    state.upstream_out_data.data.clear();
+                    if(state.downstream_in_data.datalen_frame_select) {
+                        for(int i = 0; i <  state.downstream_out_data.frame_num; i++){
+                            state.upstream_out_data.data.push_back((state.downstream_in_data.data & (0xFFULL << i*8)) >> i*8);
+                        }
+                        state.upstream_tx = true; //move this to the bottom after fixing checksum check
+                        state.sigma = 0;//move this to the bottom after fixing checksum check
+                    } else if(state.downstream_rx_hist.back().frame_num == (state.downstream_rx_hist.back().total_frames - 1)) {
+                        
+                        for(auto x : state.downstream_rx_hist) {
+                            for(int i = 0; i <  4; i++){
+                                state.upstream_out_data.data.push_back((x.data & (0xFFULL << i*8)) >> i*8);
+                            }
+                        }
+                        state.downstream_rx_hist.clear();
+                        state.upstream_tx = true;//move this to the bottom after fixing checksum check
+                        state.sigma = 0;//move this to the bottom after fixing checksum check
                     }
-                    state.upstream_tx = true;
                 }
             }
         }

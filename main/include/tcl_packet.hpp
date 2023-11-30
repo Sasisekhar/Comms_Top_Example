@@ -5,7 +5,7 @@
 
 namespace cadmium {
 	struct tcl_packet {
-		std::vector<uint32_t> data;
+		std::vector<uint8_t> data;
 		uint8_t atomic_id;
 		
 		/**
@@ -27,7 +27,7 @@ namespace cadmium {
 	std::ostream& operator<<(std::ostream& out, const tcl_packet& b) {
 		out << "{";
         for(auto x : b.data){
-            out << std::hex << x << ", ";
+            out << std::hex << (unsigned int)x << ", ";
         }
         out << "}";
 		

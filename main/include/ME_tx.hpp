@@ -4,6 +4,7 @@
 #include <iostream>
 #include "cadmium/modeling/devs/atomic.hpp"
 #include "dll_frame.hpp"
+#include "comms_defines.hpp"
 
 #ifdef RT_ESP32
 #include <driver/gpio.h>
@@ -123,10 +124,11 @@ namespace cadmium::comms {
             }
 
             state.out_data = 0;
-            state.out_data |= (0x00000000FFFFFFFF & (uint64_t)state.in_data.data);
-            state.out_data |= (0x0000001F00000000 & (uint64_t)state.in_data.frame_num << 32);
-            state.out_data |= (0x000003E000000000 & (uint64_t)state.in_data.total_frames << 37);
-            state.out_data |= (0x0003FC0000000000 & (uint64_t)state.in_data.checksum << 42);
+            state.out_data |= (PAYLOAD_MASK & (uint64_t)state.in_data.data);
+            state.out_data |= (FRAME_MASK & ((uint64_t)state.in_data.frame_num << PAYLOAD_LEN));
+            state.out_data |= (TOTAL_FRAMES_MASK & ((uint64_t)state.in_data.total_frames << (PAYLOAD_LEN + FRAME_NUM_LEN)));
+            state.out_data |= (SELECT_MASK & ((uint64_t)(state.in_data.datalen_frame_select? 1 : 0) << (PAYLOAD_LEN + FRAME_NUM_LEN + FRAME_NUM_LEN)));
+            state.out_data |= (CHECKSUM_MASK & ((uint64_t)state.in_data.checksum << (PAYLOAD_LEN + FRAME_NUM_LEN + FRAME_NUM_LEN + SELECT_LEN)));
 
             state.sigma = 0;
             // ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());

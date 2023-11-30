@@ -4,8 +4,9 @@
 #include "cadmium/modeling/devs/coupled.hpp"
 #include "generator.hpp"
 #include "commstop.hpp"
+#include "trial_port_type.hpp"
 
-namespace cadmium::comms {
+namespace cadmium::example {
     struct topSystem : public Coupled {
 
             /**
@@ -14,9 +15,9 @@ namespace cadmium::comms {
              */
             topSystem(const std::string& id) : Coupled(id) {
                 auto generator = addComponent<Generator>("generator");
-                auto comms = addComponent<commstop<uint64_t>>("commstop");
+                auto comms = addComponent<cadmium::comms::commstop<RGB_val>>("commstop");
+                // auto comms = addComponent<cadmium::comms::commstop<uint64_t>>("commstop");
 
-                // addCoupling(din->out, comms->in);
                 addCoupling(generator->out, comms->in);
             }
         };
