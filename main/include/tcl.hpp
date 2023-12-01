@@ -38,7 +38,7 @@ namespace cadmium::comms {
     std::ostream& operator<<(std::ostream &out, const tclState<T>& state) {
         out << "upstream_in_data: " << std::hex << state.upstream_in_data << ", downstream_out_data: { ";
         for(auto x : state.downstream_out_data.data){
-            out << std::hex << x;
+            out << std::hex << (unsigned int)x;
             out << ", ";
         }
          out << " }";

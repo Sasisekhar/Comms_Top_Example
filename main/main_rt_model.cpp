@@ -27,7 +27,7 @@ extern "C" {
 
 		rootCoordinator.start();
 		// rootCoordinator.simulate(std::numeric_limits<double>::infinity());
-		rootCoordinator.simulate(5.04);
+		rootCoordinator.simulate(5.99);
 		rootCoordinator.stop();	
 
 		#ifndef RT_ESP32

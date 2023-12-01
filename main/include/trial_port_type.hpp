@@ -7,7 +7,7 @@ namespace cadmium::example {
     struct RGB_val {
         // uint16_t red;
         // bool green;
-        uint8_t blue[5];
+        uint64_t blue[5];
 
         //explicit RGB_val(): /*red(0), green(false), blue(0)*/{};
     };
@@ -20,12 +20,14 @@ namespace cadmium::example {
 	 * @return output stream with the value of the bid already inserted.
 	 */
 	std::ostream& operator<<(std::ostream& out, const RGB_val& clr) {
-		out << "{ red: ";
+		// out << "{ red: ";
         // out << "0x" << std::hex << (unsigned int)clr.red;
         // out << ", green: ";
         // out << "0x" << std::hex << (unsigned int)clr.green;
-        // out << ", blue: ";
-        out << "0x" << std::hex << (unsigned int)clr.blue[0];
+        out << "{ blue: ";
+        for(int i = 0; i < 5; i++) {
+            out << "0x" << std::hex << clr.blue[i] << ", ";
+        }
         out << " }";
 		
 		return out;

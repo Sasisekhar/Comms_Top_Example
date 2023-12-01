@@ -19,6 +19,8 @@ namespace cadmium::comms {
         size_t frame_num;
         std::vector<dll_frame> downstream_rx_hist;
         std::vector<uint32_t> data;
+        bool transaction_valid;
+        bool transaction_complete;
         double sigma;
         double deadline;
 
@@ -26,8 +28,9 @@ namespace cadmium::comms {
          * Processor state constructor. By default, the processor is idling.
          * 
          */
-        explicit dllState(): upstream_in_data(), downstream_out_data(), downstream_in_data(), upstream_out_data(), downstream_tx(false), upstream_tx(false), frame_num(0), downstream_rx_hist(), data(0), sigma(std::numeric_limits<double>::infinity()), deadline(1.0){
-        }
+        explicit dllState():    upstream_in_data(), downstream_out_data(), downstream_in_data(), upstream_out_data(), downstream_tx(false),
+                                upstream_tx(false), frame_num(0), downstream_rx_hist(), data(0), transaction_valid(true),transaction_complete(false),
+                                sigma(std::numeric_limits<double>::infinity()), deadline(1.0){}
     };
 
 #ifndef NO_LOGGING
@@ -91,8 +94,6 @@ namespace cadmium::comms {
                 state.downstream_out_data.frame_num = state.frame_num;
                 state.downstream_out_data.checksum = computeChecksum(state.downstream_out_data);
 
-                // std::cout << "\x1B[33mdelInt->framenum: " << state.frame_num << "\033[0m" << std::endl;
-
                 state.frame_num++;
                 state.downstream_tx = true;
             } else {
@@ -137,7 +138,8 @@ namespace cadmium::comms {
                             }
                         }
                     } else {
-                        for(int i = 0; i < (state.upstream_in_data.data.size() + 4 + (state.upstream_in_data.data.size() % 4)); i++) {
+                        uint8_t byte_aligned_size = state.upstream_in_data.data.size() + 4 + (state.upstream_in_data.data.size() % 4);
+                        for(int i = 0; i < byte_aligned_size; i++) {
                             if(i < state.upstream_in_data.data.size()) {
                                 tmp_data |= state.upstream_in_data.data[i] << (i % 4) * 8;
                             } else {
@@ -150,9 +152,7 @@ namespace cadmium::comms {
                             }
                         }
                     }
-                }
 
-                if(state.frame_num < state.data.size()) {
                     state.downstream_out_data.datalen_frame_select = false;
                     state.downstream_out_data.data = state.data[state.frame_num];
                     state.downstream_out_data.frame_num = state.frame_num;
@@ -162,7 +162,7 @@ namespace cadmium::comms {
                     state.downstream_tx = true;
                 }
 
-                state.sigma = 0.02;
+                state.sigma = 0.01;
             }
 
             if(!downstream_in->empty()) {
@@ -171,33 +171,56 @@ namespace cadmium::comms {
                     state.downstream_in_data = x;
                 }
                 
-                bool checksum_valid = true;
                 if(state.downstream_in_data.checksum == computeChecksum(state.downstream_in_data)){
-                    state.downstream_rx_hist.push_back(state.downstream_in_data);
-                    checksum_valid = true;
+                    if(state.transaction_valid) {
+                        // std::cout << "ENTERED" << std::endl;
+                        state.downstream_rx_hist.push_back(state.downstream_in_data);
+                        if(state.downstream_in_data.frame_num == (state.downstream_in_data.total_frames - 1) || state.downstream_in_data.datalen_frame_select) {
+                            state.transaction_complete = true;
+                        }
+                    } else {
+                        if(state.downstream_in_data.datalen_frame_select) {
+                            state.downstream_rx_hist.push_back(state.downstream_in_data);
+                            state.transaction_complete = true;
+                            state.transaction_valid = true;
+                        } else if (state.downstream_in_data.frame_num == 0x00) {
+                            state.downstream_rx_hist.push_back(state.downstream_in_data);
+                            if(state.downstream_in_data.frame_num == (state.downstream_in_data.total_frames - 1)) {
+                                state.transaction_complete = true;
+                                state.transaction_valid = true;
+                            } else {
+                                state.transaction_valid = true;
+                            }
+                        } else {
+                            state.transaction_valid = false;
+                            std::cout << "FRAME REJECTED" << std::endl;
+                        }
+                    }
                 } else {
                     std::cout << "CHECKSUM INVALID" << std::endl;
+                    state.transaction_valid = false;
+                    state.downstream_rx_hist.clear();
                 }
 
-                if(checksum_valid){
+                if(state.transaction_complete){
                     state.upstream_out_data.data.clear();
                     if(state.downstream_in_data.datalen_frame_select) {
                         for(int i = 0; i <  state.downstream_out_data.frame_num; i++){
                             state.upstream_out_data.data.push_back((state.downstream_in_data.data & (0xFFULL << i*8)) >> i*8);
                         }
-                        state.upstream_tx = true; //move this to the bottom after fixing checksum check
-                        state.sigma = 0;//move this to the bottom after fixing checksum check
-                    } else if(state.downstream_rx_hist.back().frame_num == (state.downstream_rx_hist.back().total_frames - 1)) {
+                    } else {
                         
                         for(auto x : state.downstream_rx_hist) {
                             for(int i = 0; i <  4; i++){
                                 state.upstream_out_data.data.push_back((x.data & (0xFFULL << i*8)) >> i*8);
                             }
                         }
-                        state.downstream_rx_hist.clear();
-                        state.upstream_tx = true;//move this to the bottom after fixing checksum check
-                        state.sigma = 0;//move this to the bottom after fixing checksum check
                     }
+
+                    state.downstream_rx_hist.clear();
+                    state.upstream_tx = true;
+                    state.transaction_complete = false;
+                    state.sigma = 0;
                 }
             }
         }

@@ -189,11 +189,11 @@ namespace cadmium::comms {
                 // ESP_LOGI("[DEBUG] DELint", "Queue filled: %d", uxQueueMessagesWaiting(receive_queue));
                 // parse the receive symbols and print the result
                 state.in_data = parse_data_frame(rx_data.received_symbols, rx_data.num_symbols);
-                state.model_output.data         = (uint32_t) (PAYLOAD_MASK & state.in_data);
-            state.model_output.frame_num    = (uint8_t)  ((FRAME_MASK & state.in_data) >> PAYLOAD_LEN);
-            state.model_output.total_frames = (uint8_t)  ((TOTAL_FRAMES_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN));
-            state.model_output.datalen_frame_select = (uint8_t)  ((SELECT_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN + FRAME_NUM_LEN));
-            state.model_output.checksum     = (uint8_t)  ((CHECKSUM_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN + FRAME_NUM_LEN + SELECT_LEN));
+                state.model_output.data                 = (uint32_t) (PAYLOAD_MASK & state.in_data);
+                state.model_output.frame_num            = (uint8_t)  ((FRAME_MASK & state.in_data) >> PAYLOAD_LEN);
+                state.model_output.total_frames         = (uint8_t)  ((TOTAL_FRAMES_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN));
+                state.model_output.datalen_frame_select = (uint8_t)  ((SELECT_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN + FRAME_NUM_LEN));
+                state.model_output.checksum             = (uint8_t)  ((CHECKSUM_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN + FRAME_NUM_LEN + SELECT_LEN));
                 state.transmit = true;
                 // start receive again
                 ESP_ERROR_CHECK(rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &rx_config));
@@ -214,11 +214,11 @@ namespace cadmium::comms {
                 }
             }
 
-            state.model_output.data         = (uint32_t) (PAYLOAD_MASK & state.in_data);
-            state.model_output.frame_num    = (uint8_t)  ((FRAME_MASK & state.in_data) >> PAYLOAD_LEN);
-            state.model_output.total_frames = (uint8_t)  ((TOTAL_FRAMES_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN));
+            state.model_output.data                 = (uint32_t) (PAYLOAD_MASK & state.in_data);
+            state.model_output.frame_num            = (uint8_t)  ((FRAME_MASK & state.in_data) >> PAYLOAD_LEN);
+            state.model_output.total_frames         = (uint8_t)  ((TOTAL_FRAMES_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN));
             state.model_output.datalen_frame_select = (uint8_t)  ((SELECT_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN + FRAME_NUM_LEN));
-            state.model_output.checksum     = (uint8_t)  ((CHECKSUM_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN + FRAME_NUM_LEN + SELECT_LEN));
+            state.model_output.checksum             = (uint8_t)  ((CHECKSUM_MASK & state.in_data) >> (PAYLOAD_LEN + FRAME_NUM_LEN + FRAME_NUM_LEN + SELECT_LEN));
 
             state.sigma = 0;
             state.transmit = true;

@@ -1,6 +1,6 @@
 # -DNO_LOG_STATE
 all:
-	g++ -std=c++17 -DNO_LOG_STATE -I main/ main/main_rt_model.cpp -o run && ./run
+	g++ -std=c++17 -I main/ main/main_rt_model.cpp -o run && ./run
 
 run:
 	./run

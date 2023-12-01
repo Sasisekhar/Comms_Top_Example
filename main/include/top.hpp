@@ -15,8 +15,8 @@ namespace cadmium::example {
              */
             topSystem(const std::string& id) : Coupled(id) {
                 auto generator = addComponent<Generator>("generator");
+                // auto comms = addComponent<cadmium::comms::commstop<bool>>("commstop");
                 auto comms = addComponent<cadmium::comms::commstop<RGB_val>>("commstop");
-                // auto comms = addComponent<cadmium::comms::commstop<uint64_t>>("commstop");
 
                 addCoupling(generator->out, comms->in);
             }

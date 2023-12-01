@@ -13,7 +13,7 @@ namespace cadmium::example {
 	//! Class for representing the Generator DEVS model state.struct GeneratorState {
 	struct GeneratorState {
 		RGB_val val;
-		// uint64_t val;
+		// bool val;
 		double sigma;
 		float deadline;
 		//! Generator state constructor.
@@ -38,7 +38,7 @@ namespace cadmium::example {
 		
 	 public:
 		Port<RGB_val> out;
-		// Port<uint64_t> out;
+		// Port<bool> out;
 
 		/**
 		 * Constructor function.
@@ -46,7 +46,7 @@ namespace cadmium::example {
 		 */
 		Generator(const std::string& id): Atomic<GeneratorState>(id, GeneratorState()) {
 			out = addOutPort<RGB_val>("out");
-			// out = addOutPort<uint64_t>("out");
+			// out = addOutPort<bool>("out");
 			srand(0);
 		}
 
@@ -59,13 +59,14 @@ namespace cadmium::example {
 			// state.val = (uint32_t)rand() << 32 | (uint16_t)rand();
 			// state.val = (uint64_t)9220358965123336698;
 			// state.val = (uint64_t)0;
+			// state.val = true;
 			// state.val = 0xAAAA12345555FFFF;
 			// state.val = (double) 3.141592;
 			// state.val.red = 0xaaff;
 			// state.val.green = true;
 
 			for(int i = 0; i < 5; i++){
-				state.val.blue[i] = 174;
+				state.val.blue[i] = 0xaaaaffff55551234;
 			}
 		}
 
