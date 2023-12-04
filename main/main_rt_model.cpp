@@ -18,7 +18,7 @@ extern "C" {
 	{
 		std::shared_ptr<topSystem> model = std::make_shared<topSystem> ("topSystem");
 
-		cadmium::ChronoClock clock;
+		cadmium::ChronoClock clock/*(std::chrono::milliseconds(900))*/;
 		auto rootCoordinator = cadmium::RealTimeRootCoordinator<cadmium::ChronoClock<std::chrono::steady_clock>>(model, clock);
 
 		#ifndef NO_LOGGING
@@ -26,8 +26,8 @@ extern "C" {
 		#endif
 
 		rootCoordinator.start();
-		// rootCoordinator.simulate(std::numeric_limits<double>::infinity());
-		rootCoordinator.simulate(5.99);
+		rootCoordinator.simulate(std::numeric_limits<double>::infinity());
+		// rootCoordinator.simulate(5.99);
 		rootCoordinator.stop();	
 
 		#ifndef RT_ESP32

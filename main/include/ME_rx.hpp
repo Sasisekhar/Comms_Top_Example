@@ -6,6 +6,8 @@
 #include "dll_frame.hpp"
 #include "comms_defines.hpp"
 
+#include "cadmium/simulation/rt_clock/interrupt_handler.hpp"
+
 #ifdef RT_ESP32
 #include <driver/gpio.h>
 #include "esp_system.h"
@@ -92,6 +94,9 @@ namespace cadmium::comms {
             q_pkt* ptr_queue_struct = (q_pkt*)user_data;
             QueueHandle_t receive_queue = (QueueHandle_t)ptr_queue_struct->recieve_queue;
             ME_rx* class_ptr = (ME_rx*)ptr_queue_struct->class_ptr;
+            // cadmium::interrupt::interrupted = true;
+            ME_rxState state;
+            // class_ptr->externalTransition(state, 0);
             xQueueSendFromISR(receive_queue, edata, &high_task_wakeup);
             return high_task_wakeup == pdTRUE;
         }
@@ -206,6 +211,7 @@ namespace cadmium::comms {
         // external transition
         void externalTransition(ME_rxState& state, double e) const override {
 #ifdef RT_ESP32
+            std::cout << "CALLED" << std::endl;
             //Nothing done here now, comeback once interrupt implemented
 #else
             if(!in->empty()){

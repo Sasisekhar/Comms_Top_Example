@@ -173,7 +173,6 @@ namespace cadmium::comms {
                 
                 if(state.downstream_in_data.checksum == computeChecksum(state.downstream_in_data)){
                     if(state.transaction_valid) {
-                        // std::cout << "ENTERED" << std::endl;
                         state.downstream_rx_hist.push_back(state.downstream_in_data);
                         if(state.downstream_in_data.frame_num == (state.downstream_in_data.total_frames - 1) || state.downstream_in_data.datalen_frame_select) {
                             state.transaction_complete = true;
@@ -191,7 +190,7 @@ namespace cadmium::comms {
                             } else {
                                 state.transaction_valid = true;
                             }
-                        } else {
+                        } else { 
                             state.transaction_valid = false;
                             std::cout << "FRAME REJECTED" << std::endl;
                         }

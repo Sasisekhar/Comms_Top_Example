@@ -28,6 +28,8 @@
 #include "rt_clock.hpp"
 #include "../../exception.hpp"
 
+#include "interrupt_handler.hpp"
+
 namespace cadmium {
     /**
      * Real-time clock based on the std::chrono library. It is suitable for Linux, MacOS, and Windows.
@@ -79,10 +81,20 @@ namespace cadmium {
             auto duration =
                 std::chrono::duration_cast<typename T::duration>(std::chrono::duration<double>(timeNext - vTimeLast));
             rTimeLast += duration;
-            std::this_thread::sleep_until(rTimeLast);
+            // std::this_thread::sleep_until(rTimeLast);
+            while(T::now() < rTimeLast) {
+                if(cadmium::interrupt::interrupted) {
+                    // std::cout << "INTERRUPTED" << std::endl;
+                    // cadmium::interrupt::interrupted = false;
+                }
+            }
+#ifdef DEBUG_DELAY
+            std::cout << "[DELAY] " << std::chrono::duration_cast<std::chrono::microseconds>(T::now() - rTimeLast) << std::endl;
+#endif
             if (maxJitter.has_value()) {
                 auto jitter = T::now() - rTimeLast;
                 if (jitter > maxJitter.value()) {
+                    // std::cout << "delay jitter is too high" << std::endl;
                     throw cadmium::CadmiumRTClockException("delay jitter is too high");
                 }
             }

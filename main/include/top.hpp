@@ -14,11 +14,11 @@ namespace cadmium::example {
              * @param id ID of the blinkySystem model.
              */
             topSystem(const std::string& id) : Coupled(id) {
-                auto generator = addComponent<Generator>("generator");
+                // auto generator = addComponent<Generator>("generator");
                 // auto comms = addComponent<cadmium::comms::commstop<bool>>("commstop");
                 auto comms = addComponent<cadmium::comms::commstop<RGB_val>>("commstop");
 
-                addCoupling(generator->out, comms->in);
+                // addCoupling(generator->out, comms->in);
             }
         };
 }

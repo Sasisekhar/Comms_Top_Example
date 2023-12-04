@@ -33,9 +33,9 @@ namespace cadmium::comms {
             auto phy_tx = addComponent<ME_tx>("phy_tx", (gpio_num_t) 18, (uint32_t)80 * 1000 * 1000);
 
 
-            addCoupling(in, layer1->upstream_in);
-            addCoupling(layer1->downstream_out, layer2->upstream_in);
-            addCoupling(layer2->downstream_out, phy_tx->in);
+            // addCoupling(in, layer1->upstream_in);
+            // addCoupling(layer1->downstream_out, layer2->upstream_in);
+            // addCoupling(layer2->downstream_out, phy_tx->in);
 
             addCoupling(phy_rx->out, layer2->downstream_in);
             addCoupling(layer2->upstream_out, layer1->downstream_in);
