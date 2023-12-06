@@ -1,6 +1,12 @@
+#pip install diagrams
+#sudo apt install graphviz
+
+
 import os, fnmatch, sys, json, re, copy
 from colorama import Fore
 from itertools import chain
+
+import pdb
 
 def find(pattern, path):
     result = []
@@ -48,7 +54,7 @@ def getUserFiles(path):
 	key = ""
 	for i in path:
 		if('cadmium' in i.split('/')):
-			if('simulation' in i.split('/')):
+			if('logger' in i.split('/')):
 				key = "Main"
 			elif('coupled.hpp' in i.split('/') and key != "Main"):
 				key = "Coupled"
@@ -114,29 +120,83 @@ def convertToDictionary(arr, depth = 0):
 				
 				model_stack = [x for x in model_stack if x not in tmp]
 
-				model_stack.append({"Coupled" : item["Coupled"], "depth" : depth, "Atomics" : tmp})
+				IC  = {}
+				try:
+					fp = open(item["Coupled"])
+				except PermissionError:
+					print(Fore.RED + "Not enough permissions")
+					sys.exit()
+				except Exception as e:
+					print(Fore.RED + "Error reading file:", atomic, "-", e)
+				else:
+					with fp:
+						for i in fp.readlines():
+							if(i.lstrip().split('(')[0] == 'addCoupling'):
+								from_model = i.lstrip().split('(')[1].split(')')[0].strip().split(',')[0].strip()
+								to_model = i.lstrip().split('(')[1].split(')')[0].strip().split(',')[-1].strip()
+								IC.update({from_model : to_model})
+					fp.close()
+
+				instance_names = {}
+				try:
+					fp = open(item["Coupled"])
+				except PermissionError:
+					print(Fore.RED + "Not enough permissions")
+					sys.exit()
+				except Exception as e:
+					print(Fore.RED + "Error reading file:", atomic, "-", e)
+				else:
+					with fp:
+						for i in fp.readlines():
+							if(i.lstrip().split('=')[-1].split('<')[0].strip() == 'addComponent'):
+								# atomic_name = i.lstrip().split('=')[-1].split('<', 1)[-1].rsplit('>', 1)[0].strip()
+								atomic_name = i.lstrip().split('=')[-1].split('<')[1].split('>')[0].strip()
+								instance_name = i.lstrip().split('=')[0].strip().split(" ")[-1]
+								instance_names.update({atomic_name : instance_name})
+					fp.close()
+
+				EIC = []
+				EOC = []
+				try:
+					fp = open(item["Coupled"])
+				except PermissionError:
+					print(Fore.RED + "Not enough permissions")
+					sys.exit()
+				except Exception as e:
+					print(Fore.RED + "Error reading file:", atomic, "-", e)
+				else:
+					with fp:
+						for i in fp.readlines():
+							if("addInPort<" in i.lstrip()):
+								EIC.append(i.lstrip().split('=')[0].strip())
+							if("addOutPort<" in i.lstrip()):
+								EOC.append(i.lstrip().split('=')[0].strip())
+					fp.close()
+
+
+				model_stack.append({"Coupled" : item["Coupled"], "depth" : depth, "Atomics" : tmp, "Instance_names" : instance_names, "IC" : IC, "EIC" : EIC, "EOC": EOC})
 			elif("Atomic" in item.keys()):
 				model_stack.append({"Atomic" : item["Atomic"], "depth" : depth})
 	
 	return main_stack
 
-def getParameters(d, target_key):
+def getStates(d, target_key):
 	result = copy.deepcopy(d)
 	for key, value in d.items():
 		if key == target_key:
-			states = get_states(value)
+			states = parseStates(value)
 			result.update({"states" : states})
-		elif isinstance(value, dict):
-			result.update(getParameters(value, target_key))
-		elif isinstance(value, list):
+		elif (isinstance(value, dict) and not(key == 'IC' or key == 'Instance_names')):
+			result.update(getStates(value, target_key))
+		elif (isinstance(value, list) and not(key == "EIC" or key == "EOC")):
 			listDicts = []
 			for item in value:
-				listDicts.append(getParameters(item, target_key))
+				listDicts.append(getStates(item, target_key))
 			result.update({key : listDicts})
 	return result
 
 
-def get_states(atomic):
+def parseStates(atomic):
 	flag = False
 	state_name = ""
 	state_vars = {}
@@ -168,6 +228,9 @@ def get_states(atomic):
 		fp.close()
 	return state_vars
 
+
+
+
 if __name__ == '__main__':
 	if 'main' not in os.listdir():
 		print(Fore.RED + "main directory not found")
@@ -193,10 +256,10 @@ if __name__ == '__main__':
 	printModels(models)
 
 	print("Converting to Dictionary...")
-	main_stack = convertToDictionary(models)
+	main_stack = convertToDictionary(models) #Also extracts IC
 	
 	print("Extracting parameters...")
-	fullyFeaturedModel = getParameters(main_stack[0], 'Atomic')
+	fullyFeaturedModel = getStates(main_stack[0], 'Atomic')
 
 	# Convert and write JSON object to file
 	with open("model_formalism.json", "w") as outfile:

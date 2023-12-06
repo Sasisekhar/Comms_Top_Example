@@ -2,11 +2,11 @@
 #define SASI_TOP_HPP
 
 #include "cadmium/modeling/devs/coupled.hpp"
-#include "generator.hpp"
 #include "commstop.hpp"
-#include "trial_port_type.hpp"
+#include "RGB.hpp"
+#include "led_output.hpp"
 
-namespace cadmium::example {
+namespace cadmium::comms::example {
     struct topSystem : public Coupled {
 
             /**
@@ -14,11 +14,10 @@ namespace cadmium::example {
              * @param id ID of the blinkySystem model.
              */
             topSystem(const std::string& id) : Coupled(id) {
-                // auto generator = addComponent<Generator>("generator");
-                // auto comms = addComponent<cadmium::comms::commstop<bool>>("commstop");
-                auto comms = addComponent<cadmium::comms::commstop<RGB_val>>("commstop");
+                auto atomic_1 = addComponent<commstop<RGB>>("commstop_rx");
+                auto atomic_2 = addComponent<led_output>("led_output");
 
-                // addCoupling(generator->out, comms->in);
+                addCoupling(atomic_1->out, atomic_2->in);
             }
         };
 }

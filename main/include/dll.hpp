@@ -204,7 +204,7 @@ namespace cadmium::comms {
                 if(state.transaction_complete){
                     state.upstream_out_data.data.clear();
                     if(state.downstream_in_data.datalen_frame_select) {
-                        for(int i = 0; i <  state.downstream_out_data.frame_num; i++){
+                        for(int i = 0; i <  state.downstream_in_data.frame_num; i++){
                             state.upstream_out_data.data.push_back((state.downstream_in_data.data & (0xFFULL << i*8)) >> i*8);
                         }
                     } else {

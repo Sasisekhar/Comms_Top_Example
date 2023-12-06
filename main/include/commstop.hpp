@@ -3,7 +3,6 @@
 
 #include "cadmium/modeling/devs/coupled.hpp"
 #include "ME_rx.hpp"
-#include "ME_tx.hpp"
 #include "tcl.hpp"
 #include "dll.hpp"
 
@@ -30,19 +29,10 @@ namespace cadmium::comms {
             auto layer1 = addComponent<tcl<T>>("layer1");
             auto layer2 = addComponent<dll>("layer2");
             auto phy_rx = addComponent<ME_rx>("phy_rx", (gpio_num_t) 17, (uint32_t) 80 * 1000 * 1000);
-            auto phy_tx = addComponent<ME_tx>("phy_tx", (gpio_num_t) 18, (uint32_t)80 * 1000 * 1000);
-
-
-            // addCoupling(in, layer1->upstream_in);
-            // addCoupling(layer1->downstream_out, layer2->upstream_in);
-            // addCoupling(layer2->downstream_out, phy_tx->in);
 
             addCoupling(phy_rx->out, layer2->downstream_in);
             addCoupling(layer2->upstream_out, layer1->downstream_in);
-
-#ifndef RT_ESP32
-            addCoupling(phy_tx->out, phy_rx->in);
-#endif
+            addCoupling(layer1->upstream_out, out);
         }
     };
 }

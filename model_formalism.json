@@ -1,69 +1,73 @@
 {
-  "Main": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/main_rt_model.cpp",
+  "Main": "/home/sasisekhar/Desktop/RA/Communication_protocol/Traffic_light_rx/main/main_rt_model.cpp",
   "depth": 0,
   "Top": [
     {
-      "Coupled": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/top.hpp",
+      "Coupled": "/home/sasisekhar/Desktop/RA/Communication_protocol/Traffic_light_rx/main/include/top.hpp",
       "depth": 1,
       "Atomics": [
         {
-          "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/generator.hpp",
-          "depth": 2,
-          "states": {
-            "val": "0",
-            "sigma": "1",
-            "deadline": "2.0"
-          }
-        },
-        {
-          "Coupled": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/commstop.hpp",
+          "Coupled": "/home/sasisekhar/Desktop/RA/Communication_protocol/Traffic_light_rx/main/include/commstop.hpp",
           "depth": 2,
           "Atomics": [
             {
-              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/ME_rx.hpp",
+              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/Traffic_light_rx/main/include/ME_rx.hpp",
               "depth": 3,
               "states": {
                 "in_data": "0",
                 "model_output": "NULL",
-                "frame_num": "0",
+                "transmit": "false",
                 "sigma": "0.01",
                 "deadline": "1.0"
               }
             },
             {
-              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/ME_tx.hpp",
-              "depth": 3,
-              "states": {
-                "in_data": "NULL",
-                "out_data": "0",
-                "sigma": "std::numeric_limits<double>::infinity(",
-                "deadline": "1.0"
-              }
-            },
-            {
-              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/tcl.hpp",
+              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/Traffic_light_rx/main/include/tcl.hpp",
               "depth": 3,
               "states": {}
             },
             {
-              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/coupled_communication_protocol/main/include/dll.hpp",
+              "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/Traffic_light_rx/main/include/dll.hpp",
               "depth": 3,
-              "states": {
-                "upstream_in_data": "NULL",
-                "downstream_out_data": "NULL",
-                "downstream_in_data": "NULL",
-                "upstream_out_data": "NULL",
-                "downstream_tx": "false",
-                "upstream_tx": "false",
-                "frame_num": "0",
-                "downstream_rx_hist": "NULL",
-                "sigma": "std::numeric_limits<double>::infinity(",
-                "deadline": "1.0"
-              }
+              "states": {}
             }
+          ],
+          "Instance_names": {
+            "tcl": "layer1",
+            "dll": "layer2",
+            "ME_rx": "phy_rx"
+          },
+          "IC": {
+            "phy_rx->out": "layer2->downstream_in",
+            "layer2->upstream_out": "layer1->downstream_in",
+            "layer1->upstream_out": "out"
+          },
+          "EIC": [
+            "in"
+          ],
+          "EOC": [
+            "out"
           ]
+        },
+        {
+          "Atomic": "/home/sasisekhar/Desktop/RA/Communication_protocol/Traffic_light_rx/main/include/led_output.hpp",
+          "depth": 2,
+          "states": {
+            "colour": "255, 0, 0",
+            "sigma": "std::numeric_limits<double>::infinity(",
+            "deadline": "1.0"
+          }
         }
-      ]
+      ],
+      "Instance_names": {
+        "commstop": "atomic_1",
+        "led_output": "atomic_2"
+      },
+      "IC": {
+        "atomic_1->out": "atomic_2->in"
+      },
+      "EIC": [],
+      "EOC": []
     }
   ]
 }

@@ -16,7 +16,7 @@
 #include "freertos/queue.h"
 #include "driver/rmt_rx.h"
 #include "esp_log.h"
-#include "ets_sys.h"
+// #include "ets_sys.h"
 #endif
 
 namespace cadmium::comms {
