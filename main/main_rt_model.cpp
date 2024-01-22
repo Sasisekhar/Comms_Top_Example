@@ -1,8 +1,12 @@
 #include <include/cadmium/simulation/rt_root_coordinator.hpp>
-#include <include/cadmium/simulation/rt_clock/chrono.hpp>
 #include <limits>
 #include "include/top.hpp"
 
+#ifdef RT_ESP32
+	#include <include/cadmium/simulation/rt_clock/ESPclock.hpp>
+#else
+	#include <include/cadmium/simulation/rt_clock/chrono.hpp>
+#endif
 
 #ifndef NO_LOGGING
 	#include "include/cadmium/simulation/logger/stdout.hpp"
@@ -17,24 +21,16 @@ extern "C" {
 		int main()		//starting point for simulation code
 	#endif
 	{
-		// configure_led();
-		// blink_led();
-        // /* Toggle the LED state */
-        // s_led_state = !s_led_state;
-        // vTaskDelay(1000 / portTICK_PERIOD_MS);
-		// blink_led();
-        // /* Toggle the LED state */
-        // s_led_state = !s_led_state;
-        // vTaskDelay(1000 / portTICK_PERIOD_MS);
-		// blink_led();
-        // /* Toggle the LED state */
-        // s_led_state = !s_led_state;
-        // vTaskDelay(1000 / portTICK_PERIOD_MS);
 
 		std::shared_ptr<topSystem> model = std::make_shared<topSystem> ("topSystem");
 
-		cadmium::ChronoClock clock/*(std::chrono::milliseconds(900))*/;
-		auto rootCoordinator = cadmium::RealTimeRootCoordinator<cadmium::ChronoClock<std::chrono::steady_clock>>(model, clock);
+		#ifdef RT_ESP32
+			cadmium::ESPclock clock;
+			auto rootCoordinator = cadmium::RealTimeRootCoordinator<cadmium::ESPclock<double>>(model, clock);
+		#else
+			cadmium::ChronoClock clock;
+			auto rootCoordinator = cadmium::RealTimeRootCoordinator<cadmium::ChronoClock<std::chrono::steady_clock>>(model, clock);
+		#endif
 
 		#ifndef NO_LOGGING
 		rootCoordinator.setLogger<cadmium::STDOUTLogger>(";");

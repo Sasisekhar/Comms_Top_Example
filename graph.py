@@ -41,7 +41,6 @@ def createCoupledCluster(atomics, name, instances, IC, EIC, EOC):
 					elif(i.split('->')[-1].strip() in list(ACO.keys())):
 						ACO[i.split('->')[-1].strip()][1] >> Edge(label = (ACO[i.split('->')[-1].strip()][0].split('->')[-1].strip() + ":" + IC[i].split('->')[-1])) >> result[IC[i].split('->')[0]]
 					else:
-						print(IC, ',', i, ACO)
 						result[i.split('->')[0]] >> Edge(label = (i.split('->')[-1] + ':' + IC[i].split('->')[-1])) >> result[IC[i].split('->')[0]]
 	return [EIC_nodes, EOC_nodes]
 

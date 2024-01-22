@@ -4,7 +4,10 @@
 #include "cadmium/modeling/devs/coupled.hpp"
 #include "commstop.hpp"
 #include "RGB.hpp"
-#include "led_output.hpp"
+
+#ifdef RT_ESP32
+    #include "led_output.hpp"
+#endif
 
 namespace cadmium::comms::example {
     struct topSystem : public Coupled {
@@ -15,9 +18,11 @@ namespace cadmium::comms::example {
              */
             topSystem(const std::string& id) : Coupled(id) {
                 auto atomic_1 = addComponent<commstop<RGB>>("commstop_rx");
-                auto atomic_2 = addComponent<led_output>("led_output");
 
-                addCoupling(atomic_1->out, atomic_2->in);
+                #ifdef RT_ESP32
+                    auto atomic_2 = addComponent<led_output>("led_output");
+                    addCoupling(atomic_1->out, atomic_2->in);
+                #endif
             }
         };
 }

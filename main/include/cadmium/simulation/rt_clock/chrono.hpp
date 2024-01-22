@@ -81,11 +81,10 @@ namespace cadmium {
             auto duration =
                 std::chrono::duration_cast<typename T::duration>(std::chrono::duration<double>(timeNext - vTimeLast));
             rTimeLast += duration;
-            // std::this_thread::sleep_until(rTimeLast);
+            
             while(T::now() < rTimeLast) {
                 if(cadmium::interrupt::interrupted) {
-                    // std::cout << "INTERRUPTED" << std::endl;
-                    // cadmium::interrupt::interrupted = false;
+                    std::this_thread::yield();
                 }
             }
 #ifdef DEBUG_DELAY
