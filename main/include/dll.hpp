@@ -41,7 +41,7 @@ namespace cadmium::comms {
      * @return output stream with sigma already inserted.
      */
     std::ostream& operator<<(std::ostream &out, const dllState& state) {
-        out << "{ upstream_in_data: " << std::hex << state.upstream_in_data  << "}";
+        out << "{ upstream_in_data: " << std::hex << state.upstream_in_data  << " downstream_in_data: " << std::hex << state.downstream_in_data << "}";
         return out;
     }
 #endif

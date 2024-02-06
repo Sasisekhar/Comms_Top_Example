@@ -28,26 +28,41 @@
 #include "esp_log.h"
 #include "rt_clock.hpp"
 #include "../../exception.hpp"
-
 #include "interrupt_handler.hpp"
+// #include "ESP_RMT_interrupt_handler.hpp"
 
-const char* TAG = "rt_clock.hpp";
+// const char* TAG = "rt_clock.hpp";
 
 namespace cadmium {
     /**
      * Real-time clock based on the std::chrono library. It is suitable for Linux, MacOS, and Windows.
      * @tparam T Internal clock type. By default, it uses the std::chrono::steady_clock
      */
-    template<typename T = double>
+    template<typename T = double, typename Y = uint64_t, typename Z = InterruptHandler<Y>>
     class ESPclock : RealTimeClock {
     private:
         gptimer_handle_t executionTimer;
         double rTimeLast;
         std::shared_ptr<Coupled> top_model;
+        std::shared_ptr<InterruptHandler<Y>> ISR_handle;
      public:
 
+        ESPclock() : RealTimeClock() {
+            gptimer_config_t timer_config1 = {
+                .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+                .direction = GPTIMER_COUNT_UP,
+                .resolution_hz = 20 * 1000 * 1000, // 10MHz, 1 tick=100ns
+            };
+            ESP_ERROR_CHECK(gptimer_new_timer(&timer_config1, &executionTimer));
+
+            ESP_ERROR_CHECK(gptimer_enable(executionTimer));
+            gptimer_set_raw_count(executionTimer, 0);
+            gptimer_start(executionTimer);
+            this->top_model = NULL;
+        }
+
         //! The empty constructor does not check the accumulated delay jitter.
-        ESPclock(std::shared_ptr<Coupled> model) : RealTimeClock() {
+        [[maybe_unused]] ESPclock(std::shared_ptr<Coupled> model) : RealTimeClock() {
             gptimer_config_t timer_config1 = {
                 .clk_src = GPTIMER_CLK_SRC_DEFAULT,
                 .direction = GPTIMER_COUNT_UP,
@@ -59,15 +74,8 @@ namespace cadmium {
             gptimer_set_raw_count(executionTimer, 0);
             gptimer_start(executionTimer);
             this->top_model = model;
+            this->ISR_handle = std::make_shared<Z>();
         }
-
-        // /**
-        //  * Use this constructor to select the maximum allowed delay jitter.
-        //  * @param maxJitter duration of the maximum allowed jitter.
-        //  */
-        // [[maybe_unused]] explicit ChronoClock(typename T::duration maxJitter) : ChronoClock() {
-        //     this->maxJitter.emplace(maxJitter);
-        // }
 
         /**
          * Starts the real-time clock.
@@ -112,23 +120,23 @@ namespace cadmium {
             double timeNow = (double)count / (double)res;
 
             cadmium::Component pseudo("pseudo");
-            cadmium::Port<uint64_t> out;
-            out = pseudo.addOutPort<uint64_t>("out");
+            cadmium::Port<Y> out;
+            out = pseudo.addOutPort<Y>("out");
+            
 
             while(timeNow < rTimeLast) {
                 gptimer_get_resolution(executionTimer, &res);
                 gptimer_get_raw_count(executionTimer, &count);
                 timeNow = (double)count / (double)res;
 
-                if (xQueueReceive(cadmium::interrupt::recieve_queue, &cadmium::interrupt::rx_data, pdMS_TO_TICKS(10)) == pdPASS) {
-                    uint64_t data = cadmium::interrupt::parse_data_frame(
-                                                                            cadmium::interrupt::rx_data.received_symbols, 
-                                                                            cadmium::interrupt::rx_data.num_symbols
-                                                                        );
+                if (ISR_handle->ISRcb()) {
+                    auto data = ISR_handle->decodeISR();
                     out->addMessage(data);
                     top_model->getInPort("in")->propagate(out);
                     break;
                 }
+                
+                
             }
             gptimer_get_resolution(executionTimer, &res);
             gptimer_get_raw_count(executionTimer, &count);
@@ -139,7 +147,7 @@ namespace cadmium {
 #ifdef DEBUG_DELAY
             std::cout << "[DELAY] " << (timeNow - rTimeLast)*(1000 * 1000) << " us" << std::endl;
 #endif
-            return RealTimeClock::waitUntil(timeNow);
+            return RealTimeClock::waitUntil(std::min(timeNow, timeNext));
         }
     };
 }

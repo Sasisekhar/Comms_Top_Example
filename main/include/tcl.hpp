@@ -4,7 +4,6 @@
 #include <iostream>
 #include "cadmium/modeling/devs/atomic.hpp"
 #include "tcl_packet.hpp"
-// #include "esp_log.h"
 
 namespace cadmium::comms {
 
@@ -36,8 +35,8 @@ namespace cadmium::comms {
      */
     template<typename T>
     std::ostream& operator<<(std::ostream &out, const tclState<T>& state) {
-        out << "upstream_in_data: " << std::hex << state.upstream_in_data << ", downstream_out_data: { ";
-        for(auto x : state.downstream_out_data.data){
+        out << "upstream_in_data: " << std::hex << state.upstream_in_data << ", downstream_in_data: { ";
+        for(auto x : state.downstream_in_data.data){
             out << std::hex << (unsigned int)x;
             out << ", ";
         }

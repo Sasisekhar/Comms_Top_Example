@@ -4,6 +4,7 @@
 
 #ifdef RT_ESP32
 	#include <include/cadmium/simulation/rt_clock/ESPclock.hpp>
+	#include "include/drivers/ESP_RMT_interrupt_handler.hpp"
 #else
 	#include <include/cadmium/simulation/rt_clock/chrono.hpp>
 #endif
@@ -25,8 +26,9 @@ extern "C" {
 		std::shared_ptr<topSystem> model = std::make_shared<topSystem> ("topSystem");
 
 		#ifdef RT_ESP32
-			cadmium::ESPclock clock(model);
-			auto rootCoordinator = cadmium::RealTimeRootCoordinator<cadmium::ESPclock<double>>(model, clock);
+			cadmium::ESPclock<double, uint64_t, cadmium::comms::RMTinterruptHandler> clock(model);
+
+			auto rootCoordinator = cadmium::RealTimeRootCoordinator<cadmium::ESPclock<double, uint64_t, cadmium::comms::RMTinterruptHandler>>(model, clock);
 		#else
 			cadmium::ChronoClock clock;
 			auto rootCoordinator = cadmium::RealTimeRootCoordinator<cadmium::ChronoClock<std::chrono::steady_clock>>(model, clock);
