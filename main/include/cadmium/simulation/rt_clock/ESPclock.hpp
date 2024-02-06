@@ -43,10 +43,11 @@ namespace cadmium {
     private:
         gptimer_handle_t executionTimer;
         double rTimeLast;
+        std::shared_ptr<Coupled> top_model;
      public:
 
         //! The empty constructor does not check the accumulated delay jitter.
-        ESPclock() : RealTimeClock() {
+        ESPclock(std::shared_ptr<Coupled> model) : RealTimeClock() {
             gptimer_config_t timer_config1 = {
                 .clk_src = GPTIMER_CLK_SRC_DEFAULT,
                 .direction = GPTIMER_COUNT_UP,
@@ -57,6 +58,7 @@ namespace cadmium {
             ESP_ERROR_CHECK(gptimer_enable(executionTimer));
             gptimer_set_raw_count(executionTimer, 0);
             gptimer_start(executionTimer);
+            this->top_model = model;
         }
 
         // /**
@@ -109,16 +111,35 @@ namespace cadmium {
             gptimer_get_raw_count(executionTimer, &count);
             double timeNow = (double)count / (double)res;
 
+            cadmium::Component pseudo("pseudo");
+            cadmium::Port<uint64_t> out;
+            out = pseudo.addOutPort<uint64_t>("out");
+
             while(timeNow < rTimeLast) {
                 gptimer_get_resolution(executionTimer, &res);
                 gptimer_get_raw_count(executionTimer, &count);
-                timeNow = (double)count / (double)res;   
+                timeNow = (double)count / (double)res;
+
+                if (xQueueReceive(cadmium::interrupt::recieve_queue, &cadmium::interrupt::rx_data, pdMS_TO_TICKS(10)) == pdPASS) {
+                    uint64_t data = cadmium::interrupt::parse_data_frame(
+                                                                            cadmium::interrupt::rx_data.received_symbols, 
+                                                                            cadmium::interrupt::rx_data.num_symbols
+                                                                        );
+                    out->addMessage(data);
+                    top_model->getInPort("in")->propagate(out);
+                    break;
+                }
             }
+            gptimer_get_resolution(executionTimer, &res);
+            gptimer_get_raw_count(executionTimer, &count);
+            timeNow = (double)count / (double)res;
+
+            rTimeLast = timeNow;
 
 #ifdef DEBUG_DELAY
             std::cout << "[DELAY] " << (timeNow - rTimeLast)*(1000 * 1000) << " us" << std::endl;
 #endif
-            return RealTimeClock::waitUntil(timeNext);
+            return RealTimeClock::waitUntil(timeNow);
         }
     };
 }

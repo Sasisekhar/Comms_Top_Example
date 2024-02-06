@@ -25,7 +25,7 @@ extern "C" {
 		std::shared_ptr<topSystem> model = std::make_shared<topSystem> ("topSystem");
 
 		#ifdef RT_ESP32
-			cadmium::ESPclock clock;
+			cadmium::ESPclock clock(model);
 			auto rootCoordinator = cadmium::RealTimeRootCoordinator<cadmium::ESPclock<double>>(model, clock);
 		#else
 			cadmium::ChronoClock clock;

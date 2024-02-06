@@ -109,8 +109,8 @@ namespace cadmium {
 
         [[maybe_unused]] void simulate(double timeInterval) {
             double timeNext = topCoordinator->getTimeNext();
-            double timeFinal = topCoordinator->getTimeLast()+timeInterval;
-            while(timeNext < timeFinal) {
+            double timeFinal = topCoordinator->getTimeLast() + timeInterval;
+            while(timeNext < timeFinal || timeInterval == std::numeric_limits<double>::infinity()) { //Simulation runs for infinity even if no events occur
                 this->simulationAdvance(timeNext);
                 timeNext = topCoordinator->getTimeNext();
             }
