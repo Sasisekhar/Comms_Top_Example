@@ -5,6 +5,7 @@
 #include "cadmium/modeling/devs/atomic.hpp"
 #include "commstop.hpp"
 #include "RGB.hpp"
+#include "generator.hpp"
 
 #ifdef RT_ESP32
     #include "led_output.hpp"
@@ -22,14 +23,15 @@ namespace cadmium::comms::example {
          */
         topSystem(const std::string& id) : Coupled(id) {
             auto atomic_1 = addComponent<commstop<RGB>>("commstop_rx");
+            auto atomic_2 = addComponent<Generator>("generator");
 
-            in = addInPort<uint64_t>("in");
+            // in = addInPort<uint64_t>("in");
 
-            addCoupling(in, atomic_1->in);
-            #ifdef RT_ESP32
-                auto atomic_2 = addComponent<led_output>("led_output");
-                addCoupling(atomic_1->out, atomic_2->in);
-            #endif
+            addCoupling(atomic_2 -> out, atomic_1->in);
+            // #ifdef RT_ESP32
+            //     auto atomic_2 = addComponent<led_output>("led_output");
+            //     addCoupling(atomic_1->out, atomic_2->in);
+            // #endif
         }
     };
 }

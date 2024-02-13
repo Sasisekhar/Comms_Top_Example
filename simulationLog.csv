@@ -1,0 +1,54 @@
+sep = ;
+time;model_id;model_name;port_name;data
+0;1;generator;;57599806414848
+0;3;phy_rx;;in_data: 0
+0;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x0, datalen_frame_select: False, frame_num: 0x0, total_frames: 0x0, checksum: 0x0 }}
+0;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: {  }
+1;1;generator;out;57599806414848
+1;1;generator;;57599806414848
+1;3;phy_rx;;in_data: 346300002000
+1;3;phy_rx;out;{ data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }
+1;3;phy_rx;;in_data: 346300002000
+1;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }}
+1;4;layer2;upstream_out;{0, 20, 0, }
+1;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }}
+1;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: { 0, 20, 0,  }
+1;5;layer1;upstream_out;{ RGB: 0, 32, 0 }
+1;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: { 0, 20, 0,  }
+1.4851;1;generator;out;57599806414848
+1.4851;1;generator;;57599806414848
+1.4851;3;phy_rx;;in_data: 346300002000
+1.4851;3;phy_rx;out;{ data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }
+1.4851;3;phy_rx;;in_data: 346300002000
+1.4851;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }}
+1.4851;4;layer2;upstream_out;{0, 20, 0, }
+1.4851;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }}
+1.4851;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: { 0, 20, 0,  }
+1.4851;5;layer1;upstream_out;{ RGB: 0, 32, 0 }
+1.4851;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: { 0, 20, 0,  }
+1.58007;1;generator;out;57599806414848
+1.58007;1;generator;;57599806414848
+1.58007;3;phy_rx;;in_data: 346300002000
+1.58007;3;phy_rx;out;{ data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }
+1.58007;3;phy_rx;;in_data: 346300002000
+1.58007;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }}
+1.58007;4;layer2;upstream_out;{0, 20, 0, }
+1.58007;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }}
+1.58007;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: { 0, 20, 0,  }
+1.58007;5;layer1;upstream_out;{ RGB: 0, 32, 0 }
+1.58007;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: { 0, 20, 0,  }
+2.91513;1;generator;out;57599806414848
+2.91513;1;generator;;57599806406688
+2.91513;3;phy_rx;;in_data: 346300002000
+2.91513;3;phy_rx;out;{ data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }
+2.91513;3;phy_rx;;in_data: 346300002000
+2.91513;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }}
+2.91513;4;layer2;upstream_out;{0, 20, 0, }
+2.91513;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }}
+2.91513;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: { 0, 20, 0,  }
+2.91513;5;layer1;upstream_out;{ RGB: 0, 32, 0 }
+2.91513;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: { 0, 20, 0,  }
+2.91513;1;generator;;57599806406688
+2.91513;3;phy_rx;;in_data: 346300002000
+2.91513;4;layer2;;{ upstream_in_data: {} downstream_in_data: { data: 0x2000, datalen_frame_select: True, frame_num: 0x3, total_frames: 0x3, checksum: 0x6 }}
+2.91513;5;layer1;;upstream_in_data: { RGB: 0, 0, 0 }, downstream_in_data: { 0, 20, 0,  }
